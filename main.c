@@ -35,6 +35,9 @@ void master(int proc_n)
     MPI_Status status;
     MPI_Request request; // used for immediate
 
+    double t1, t2; // Tempo de início - Tempo de término
+    t1 = MPI_Wtime(); // inicia a contagem do tempo
+
     int vetor[ARRAY_SIZE][proc_n*2]; // Saco de trabalho
     int done_tasks = 0;
     int total_tasks = proc_n*2;
@@ -162,6 +165,9 @@ void master(int proc_n)
     printf("\n");
     #endif
 
+    t2 = MPI_Wtime(); // termina a contagem do tempo
+    printf("\nTempo de execucao: %f\n\n", t2-t1);   
+
 }
 
 void slave(int my_rank)
@@ -182,12 +188,16 @@ void slave(int my_rank)
         int message[ARRAY_SIZE+1];
 
         // Envia mensagem ao master solicitando trabalho
+        #ifdef DEBUG
         printf("\n[SLAVE %d] Solicitando trabalho", my_rank);
         MPI_Send(message, ARRAY_SIZE, MPI_INT, MASTER, TAG_REQUEST_TASK, MPI_COMM_WORLD);
+    #endif
 
         // Recebe o trabalho
+        #ifdef DEBUG
         printf("\n[SLAVE %d] Recebendo trabalho", my_rank);
         MPI_Recv(message, ARRAY_SIZE, MPI_INT, MASTER, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        #endif
 
         if (status.MPI_TAG == TAG_KILL_SLAVE) {
 
@@ -199,11 +209,15 @@ void slave(int my_rank)
         }
 
         // Ordena vetor
+        #ifdef DEBUG
         printf("\n[SLAVE %d] Ordenando vetor", my_rank);
+        #endif
         bs(ARRAY_SIZE, message);
 
         // Retorna vetor ordenado ao master
+        #ifdef DEBUG
         printf("\n[SLAVE %d] Enviando trabalho", my_rank);
+        #endif
         MPI_Send(message, ARRAY_SIZE, MPI_INT, MASTER, TAG_JOB_MESSAGES, MPI_COMM_WORLD);
 
         #ifdef DEBUG
@@ -225,8 +239,6 @@ int main(int argc, char **argv)
 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &proc_n);
-
-    printf("%2d ", my_rank);
 
     if (my_rank == 0) {
         master(proc_n);

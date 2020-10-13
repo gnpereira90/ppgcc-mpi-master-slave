@@ -11,5 +11,10 @@ make
 
 **Run**
 ```bash
-make run
+make run NP=4
+```
+
+**Build and run**
+```bash
+make test NP=4
 ```

@@ -7,7 +7,7 @@ run:
 	mpirun --hostfile hostfile -np ${NP} main.o
 
 clear:
-	rm -f main.o
+	rm -f *.o
 
 test:
 	mpicc main.c -o main.o

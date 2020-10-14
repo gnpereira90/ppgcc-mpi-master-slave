@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define DEBUG 1            // comentar esta linha quando for medir tempo
-#define ARRAY_SIZE 10000      // trabalho final com o valores 10.000, 100.000, 1.000.000
+#define ARRAY_SIZE 100      // trabalho final com o valores 10.000, 100.000, 1.000.000
 #define MASTER 0
 #define TAG_REQUEST_TASK 1
 #define TAG_KILL_SLAVE 2
@@ -40,11 +40,14 @@ void master(int proc_n)
 
     int vetor[ARRAY_SIZE][proc_n*2]; // Saco de trabalho
     int size_message = ARRAY_SIZE+1;
+    int slaves_alive = proc_n;
     int done_tasks = 0;
     int total_tasks = proc_n*2;
     int last_task = 0; // Utilizado para controlar qual a posição do vetor que será enviado ao slave
     int i;
     int j;
+
+    printf("\ntotal_tasks %d slaves_alive %d", total_tasks, slaves_alive);
 
     for (i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
         for (j=0 ; j<proc_n*2; j++) {
@@ -63,7 +66,7 @@ void master(int proc_n)
     printf("\n");
     #endif
 
-    while (done_tasks < total_tasks) {
+    while (done_tasks < total_tasks || slaves_alive > 1) {
 
         // int *message;
         // message = (int *) malloc(ARRAY_SIZE+1 * sizeof(int));
@@ -113,6 +116,8 @@ void master(int proc_n)
             } else { // Shutdown
                 int stop_flag = 1;
                 MPI_Send(&stop_flag, 1, MPI_INT, status.MPI_SOURCE, TAG_KILL_SLAVE, MPI_COMM_WORLD);
+                slaves_alive -= 1;
+                printf("\n[MASTER] KILLING SLAVE slaves_alive %d", slaves_alive);
             }
 
 
@@ -127,9 +132,9 @@ void master(int proc_n)
             // for (i=0; i<ARRAY_SIZE+1; i++)
             //     printf("\n [%d]", message[i]);
             
-            #ifdef DEBUG
-            printf("\n[MASTER] message[size_message] %d", message[size_message]);
-            #endif
+            // #ifdef DEBUG
+            // printf("\n[MASTER] message[size_message] %d", message[size_message]);
+            // #endif
             
             int index = message[size_message]; // Indice da task resolvida pelo slave
             for (j=0; j<ARRAY_SIZE; j++) {
@@ -149,6 +154,7 @@ void master(int proc_n)
         }
 
         // Há mais trabalho a ser realizado?
+        printf("\n[MASTER] done_tasks %d, total_tasks %d", done_tasks, total_tasks);
         if (done_tasks == total_tasks) {
 
             // Envia mensagem de desligamento
@@ -156,10 +162,23 @@ void master(int proc_n)
             printf("\n[MASTER] Enviando comando de encerramento aos slaves");
             #endif
 
-            int slave_id;
-            int stop_flag = 1;
-            for (slave_id=1; slave_id<proc_n; slave_id++) {
-                MPI_Send(&stop_flag, 1, MPI_INT, slave_id, TAG_KILL_SLAVE, MPI_COMM_WORLD);
+            printf("\n[MASTER] slaves_alive %d\n", slaves_alive);
+            while(slaves_alive > 1) {
+
+                printf("\n[MASTER] MATANDO SLAVE");
+                
+                // Esperamos receber uma solicitação de trabalho
+                int message[size_message];
+                MPI_Recv(message, size_message, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+                // Enviando mensagem de encerramento
+                int stop_flag = 1;
+                MPI_Send(&stop_flag, 1, MPI_INT, status.MPI_SOURCE, TAG_KILL_SLAVE, MPI_COMM_WORLD);
+
+                slaves_alive -= 1;
+
+                printf("\n[MASTER] MATOU SLAVE slaves_alive %d", slaves_alive);
+
             }
 
             break;

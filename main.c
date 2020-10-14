@@ -4,7 +4,7 @@
 #include <string.h>
 
 #define DEBUG 1            // comentar esta linha quando for medir tempo
-#define ARRAY_SIZE 40      // trabalho final com o valores 10.000, 100.000, 1.000.000
+#define ARRAY_SIZE 10000      // trabalho final com o valores 10.000, 100.000, 1.000.000
 #define MASTER 0
 #define TAG_REQUEST_TASK 1
 #define TAG_KILL_SLAVE 2
@@ -71,6 +71,7 @@ void master(int proc_n)
         // Recebe mensagem do slave
         // int message[ARRAY_SIZE+1];   // Buffer para as mensagens
         MPI_Recv(message, ARRAY_SIZE, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
         #ifdef DEBUG
         printf("\n[MASTER] Recebendo mensagem de solicitação de slave id %d com tag %d", status.MPI_SOURCE, status.MPI_TAG);
         #endif
@@ -190,20 +191,18 @@ void slave(int my_rank)
         // Envia mensagem ao master solicitando trabalho
         #ifdef DEBUG
         printf("\n[SLAVE %d] Solicitando trabalho", my_rank);
+        #endif
+
         MPI_Send(message, ARRAY_SIZE, MPI_INT, MASTER, TAG_REQUEST_TASK, MPI_COMM_WORLD);
-    #endif
 
         // Recebe o trabalho
         #ifdef DEBUG
         printf("\n[SLAVE %d] Recebendo trabalho", my_rank);
-        MPI_Recv(message, ARRAY_SIZE, MPI_INT, MASTER, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
         #endif
 
-        if (status.MPI_TAG == TAG_KILL_SLAVE) {
+        MPI_Recv(message, ARRAY_SIZE, MPI_INT, MASTER, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-            #ifdef DEBUG
-            printf("\n[SLAVE %d] Goodbye from slave number: %d\n", my_rank, my_rank);
-            #endif
+        if (status.MPI_TAG == TAG_KILL_SLAVE) {
 
             break;
         }
@@ -212,12 +211,14 @@ void slave(int my_rank)
         #ifdef DEBUG
         printf("\n[SLAVE %d] Ordenando vetor", my_rank);
         #endif
+
         bs(ARRAY_SIZE, message);
 
         // Retorna vetor ordenado ao master
         #ifdef DEBUG
         printf("\n[SLAVE %d] Enviando trabalho", my_rank);
         #endif
+        
         MPI_Send(message, ARRAY_SIZE, MPI_INT, MASTER, TAG_JOB_MESSAGES, MPI_COMM_WORLD);
 
         #ifdef DEBUG
@@ -226,6 +227,10 @@ void slave(int my_rank)
 
         // free(message);
     }
+
+    #ifdef DEBUG
+    printf("\n[SLAVE %d] Goodbye from slave number: %d\n", my_rank, my_rank);
+    #endif
 
 }
 

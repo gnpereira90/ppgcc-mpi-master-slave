@@ -1,6 +1,6 @@
 default: build
 
-build: main.c
+build:
 	mpicc main.c -o main.o
 
 run:

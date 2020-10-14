@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEBUG 1            // comentar esta linha quando for medir tempo
-#define ARRAY_SIZE 100      // trabalho final com o valores 10.000, 100.000, 1.000.000
+// #define DEBUG 1            // comentar esta linha quando for medir tempo
+#define ARRAY_SIZE 40      // trabalho final com o valores 10.000, 100.000, 1.000.000
+#define NUMBER_VECTORS 20   // Quantidade de vetores na matriz
 #define MASTER 0
 #define TAG_REQUEST_TASK 1
 #define TAG_KILL_SLAVE 2
@@ -30,6 +31,25 @@ void bs(int n, int * vetor)
         }
 }
 
+void initialize_matrix(int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
+    
+    for (int i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
+        for (int j=0 ; j<NUMBER_VECTORS; j++) {
+            matrix[i][j] = ARRAY_SIZE-i;
+        }
+    }
+
+    #ifdef DEBUG // Caso a var DEBUG estiver definida como 1, esse trecho abaixo é compilado
+    printf("\nMatrix:\n");
+    for (int i=0 ; i<ARRAY_SIZE; i++) {
+        for (int j=0 ; j<NUMBER_VECTORS; j++) {
+            printf(" [%03d] ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+    #endif
+}
+
 void master(int proc_n)
 {
     MPI_Status status;
@@ -38,33 +58,21 @@ void master(int proc_n)
     double t1, t2; // Tempo de início - Tempo de término
     t1 = MPI_Wtime(); // inicia a contagem do tempo
 
-    int vetor[ARRAY_SIZE][proc_n*2]; // Saco de trabalho
+    // const int ARRAY_SIZE = 100;
+    // const int NUMBER_VECTORS = proc_n*2;
+
+    int matrix[ARRAY_SIZE][NUMBER_VECTORS]; // Saco de trabalho
     int size_message = ARRAY_SIZE+1;
     int slaves_alive = proc_n;
     int done_tasks = 0;
     int total_tasks = proc_n*2;
-    int last_task = 0; // Utilizado para controlar qual a posição do vetor que será enviado ao slave
+    int last_task = 0; // Utilizado para controlar qual a posição do matrix que será enviado ao slave
     int i;
     int j;
 
     printf("\ntotal_tasks %d slaves_alive %d", total_tasks, slaves_alive);
 
-    for (i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
-        for (j=0 ; j<proc_n*2; j++) {
-            vetor[i][j] = ARRAY_SIZE-i;
-        }
-    }
-
-    #ifdef DEBUG // Caso a var DEBUG estiver definida como 1, esse trecho abaixo é compilado
-    printf("\n[MASTER] Vetor:\n");
-    for (i=0 ; i<ARRAY_SIZE; i++) {
-        for (j=0 ; j<proc_n*2; j++) {
-            printf("   [%03d] ", vetor[i][j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-    #endif
+    initialize_matrix(matrix);
 
     while (done_tasks < total_tasks || slaves_alive > 1) {
 
@@ -89,17 +97,17 @@ void master(int proc_n)
 
             if (last_task < total_tasks) {
 
-                // Envia vetor ao slave
+                // Envia matrix ao slave
                 // int new_vector[ARRAY_SIZE+1];
                 for (j=0; j<ARRAY_SIZE; j++) {
-                    message[j] = vetor[j][last_task];
+                    message[j] = matrix[j][last_task];
                     // printf("\n [%3d] ", new_vector[j]);
                 }
 
                 message[size_message] = last_task; // ulitmo elemento do vector é o indice do saco de trabalho
-                printf("\n[MASTER] message[size_message] %d", message[size_message]);
-
+                
                 #ifdef DEBUG
+                printf("\n[MASTER] message[size_message] %d", message[size_message]);
                 printf("\n[MASTER] Enviando trabalho ao slave id: %d", status.MPI_SOURCE);
                 #endif
 
@@ -117,7 +125,10 @@ void master(int proc_n)
                 int stop_flag = 1;
                 MPI_Send(&stop_flag, 1, MPI_INT, status.MPI_SOURCE, TAG_KILL_SLAVE, MPI_COMM_WORLD);
                 slaves_alive -= 1;
+                
+                #ifdef DEBUG
                 printf("\n[MASTER] KILLING SLAVE slaves_alive %d", slaves_alive);
+                #endif
             }
 
 
@@ -138,7 +149,7 @@ void master(int proc_n)
             
             int index = message[size_message]; // Indice da task resolvida pelo slave
             for (j=0; j<ARRAY_SIZE; j++) {
-                vetor[j][index] = message[j];
+                matrix[j][index] = message[j];
                 // printf("\n [%3d] ", vetor[j][index]);
             }
 
@@ -191,7 +202,7 @@ void master(int proc_n)
     printf("\n[MASTER] Vetores ordenados:\n");
     for (i=0 ; i<ARRAY_SIZE; i++) {
         for (j=0 ; j<proc_n*2; j++) {
-            printf("   [%03d] ", vetor[i][j]);
+            printf("   [%03d] ", matrix[i][j]);
         }
         printf("\n");
     }

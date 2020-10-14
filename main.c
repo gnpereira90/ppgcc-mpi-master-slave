@@ -154,35 +154,35 @@ void master(int proc_n)
         }
 
         // Há mais trabalho a ser realizado?
-        printf("\n[MASTER] done_tasks %d, total_tasks %d", done_tasks, total_tasks);
-        if (done_tasks == total_tasks) {
+        // printf("\n[MASTER] done_tasks %d, total_tasks %d", done_tasks, total_tasks);
+        // if (done_tasks == total_tasks) {
 
-            // Envia mensagem de desligamento
-            #ifdef DEBUG
-            printf("\n[MASTER] Enviando comando de encerramento aos slaves");
-            #endif
+        //     // Envia mensagem de desligamento
+        //     #ifdef DEBUG
+        //     printf("\n[MASTER] Enviando comando de encerramento aos slaves");
+        //     #endif
 
-            printf("\n[MASTER] slaves_alive %d\n", slaves_alive);
-            while(slaves_alive > 1) {
+        //     printf("\n[MASTER] slaves_alive %d\n", slaves_alive);
+        //     while(slaves_alive > 1) {
 
-                printf("\n[MASTER] MATANDO SLAVE");
+        //         printf("\n[MASTER] MATANDO SLAVE");
                 
-                // Esperamos receber uma solicitação de trabalho
-                int message[size_message];
-                MPI_Recv(message, size_message, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        //         // Esperamos receber uma solicitação de trabalho
+        //         int message[size_message];
+        //         MPI_Recv(message, size_message, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-                // Enviando mensagem de encerramento
-                int stop_flag = 1;
-                MPI_Send(&stop_flag, 1, MPI_INT, status.MPI_SOURCE, TAG_KILL_SLAVE, MPI_COMM_WORLD);
+        //         // Enviando mensagem de encerramento
+        //         int stop_flag = 1;
+        //         MPI_Send(&stop_flag, 1, MPI_INT, status.MPI_SOURCE, TAG_KILL_SLAVE, MPI_COMM_WORLD);
 
-                slaves_alive -= 1;
+        //         slaves_alive -= 1;
 
-                printf("\n[MASTER] MATOU SLAVE slaves_alive %d", slaves_alive);
+        //         printf("\n[MASTER] MATOU SLAVE slaves_alive %d", slaves_alive);
 
-            }
+        //     }
 
-            break;
-        }
+        //     break;
+        // }
 
     }
 

@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+echo
+echo "Running on `hostname`"
+echo "Initial Time: `date`"
+echo
+
 mkdir -p logs
 touch logs/sort-sequential.csv
 touch logs/master-slave-sort.csv
@@ -21,8 +26,8 @@ echo "Runnning Bubble Sort Sequential"
 for k in $(seq 1 $TRIES); do
     for ((i = 0; i < ${#ARGS[@]}; i++)); do
         row=$(make run ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
-        echo "$k; ${#ARGS[@]}; $number_vectors; $row" >> "$OUTPUTFILE_SEQUENTIAL"
-        echo "$k; ${#ARGS[@]}; $number_vectors; $row"
+        echo "$k; ${ARGS[$i]}; $number_vectors; $row" >> "$OUTPUTFILE_SEQUENTIAL"
+        echo "$k; ${ARGS[$i]}; $number_vectors; $row"
     done
 done
 
@@ -34,9 +39,13 @@ for k in $(seq 1 $TRIES); do
     processes=($(seq 2 2 32))
     for np in "${processes[@]}"; do
         for ((i = 0; i < ${#ARGS[@]}; i++)); do
-            row=$(make run NP=$np ARRAY_SIZE=${#ARGS[@]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
-            echo "$k; $np; ${#ARGS[@]}; $number_vectors; $row" >> "$OUTPUTFILE_MASTER_SLAVE"
-            echo "$k; $np; ${#ARGS[@]}; $number_vectors; $row"
+            row=$(make run NP=$np ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
+            echo "$k; $np; ${ARGS[$i]}; $number_vectors; $row" >> "$OUTPUTFILE_MASTER_SLAVE"
+            echo "$k; $np; ${ARGS[$i]}; $number_vectors; $row"
         done
     done
 done
+
+echo
+echo "\nFinal Time: `date`"
+echo

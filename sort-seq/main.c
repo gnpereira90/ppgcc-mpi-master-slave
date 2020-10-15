@@ -4,8 +4,8 @@
 #include <time.h>
 
 // #define DEBUG 1             // comentar esta linha quando for medir tempo
-#define ARRAY_SIZE 1000000      // trabalho final com o valores 10.000, 100.000, 1.000.000
-#define NUMBER_VECTORS 20   // Quantidade de vetores na matriz
+// #define ARRAY_SIZE 1000000      // trabalho final com o valores 10.000, 100.000, 1.000.000
+// #define NUMBER_VECTORS 20   // Quantidade de vetores na matriz
 
 // Bubble Sort
 void bs(int n, int * vetor) {
@@ -26,7 +26,7 @@ void bs(int n, int * vetor) {
         }
 }
 
-void initialize_matrix(int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
+void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
     
     for (int i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
         for (int j=0 ; j<NUMBER_VECTORS; j++) {
@@ -47,14 +47,15 @@ void initialize_matrix(int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
 
 int main(int argc, char **argv) {
 
-    // const int ARRAY_SIZE = argv[1];
-    // const int NUMBER_VECTORS = argv[2];
+    const int ARRAY_SIZE = atoi(argv[1]);
+    const int NUMBER_VECTORS = atoi(argv[2]);
     // const int DEBUG = argv[3];
 
-    int matrix[ARRAY_SIZE][NUMBER_VECTORS];
-    initialize_matrix(matrix);
-
     clock_t start = clock(); // inicia a contagem do tempo
+
+    int matrix[ARRAY_SIZE][NUMBER_VECTORS];
+
+    initialize_matrix(ARRAY_SIZE, NUMBER_VECTORS, matrix);
 
     for (int i=0; i<NUMBER_VECTORS; i++) {
 
@@ -76,9 +77,22 @@ int main(int argc, char **argv) {
 
     }
 
+    #ifdef DEBUG
+    printf("\nMatrix sorted:\n");
+    for (int i=0 ; i<ARRAY_SIZE; i++) {
+        for (int j=0 ; j<NUMBER_VECTORS; j++) {
+            printf(" [%03d] ", matrix[i][j]);
+        }
+        printf("\n");
+    }
+    #endif
+
     clock_t end = clock(); // termina a contagem do tempo
     float seconds = (float)(end - start) / CLOCKS_PER_SEC;
-    printf("\nTempo de execucao: %f\n\n", seconds);
+
+    printf("\nARRAY_SIZE=%d", ARRAY_SIZE);
+    printf("\nNUMBER_VECTORS=%d", NUMBER_VECTORS);
+    printf("\nRUNTIME=%f\n", seconds);
 
     return 0;
 }

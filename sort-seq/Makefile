@@ -1,7 +1,7 @@
 default: build
 
 build:
-	g++ main.c -o main.o
+	gcc main.c -o main.o
 
 run: 
 	./main.o ${ARRAY_SIZE} ${NUMBER_VECTORS} ${DEBUG}

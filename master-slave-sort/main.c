@@ -169,7 +169,10 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
     #endif
 
     t2 = MPI_Wtime(); // termina a contagem do tempo
-    printf("\nTempo de execucao: %f\n\n", t2-t1);   
+
+    printf("\nARRAY_SIZE=%d", ARRAY_SIZE);
+    printf("\nNUMBER_VECTORS=%d", NUMBER_VECTORS);
+    printf("\nRUNTIME=%f\n", t2-t1);
 
 }
 

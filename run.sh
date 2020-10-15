@@ -4,12 +4,12 @@ mkdir -p logs
 touch logs/sort-sequential.csv
 touch logs/master-slave-sort.csv
 
-TRIES=5
+TRIES=3
 # CORES=("1" "2" "4" "8" "16")
 ARGS=(10000, 100000, 1000000)
 DIR=$PWD
-OUTPUTFILE_MASTER_SLAVE="$PWD/logs/sort-sequential.csv"
-OUTPUTFILE_SEQUENTIAL="$PWD/logs/master-slave-sort.csv"
+OUTPUTFILE_SEQUENTIAL="$PWD/logs/sort-sequential.csv"
+OUTPUTFILE_MASTER_SLAVE="$PWD/logs/master-slave-sort.csv"
 
 number_vectors=1000
 # array_size=100000

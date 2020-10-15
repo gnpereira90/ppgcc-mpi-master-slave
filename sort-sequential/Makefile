@@ -1,9 +1,9 @@
 default: build
 
 build:
-	gcc main.c -o main.o
+	gcc main.c -o main.o -std=c99
 
-run: 
+run: build
 	./main.o ${ARRAY_SIZE} ${NUMBER_VECTORS} ${DEBUG}
 
 test: build 

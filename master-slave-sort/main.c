@@ -259,6 +259,9 @@ void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
 
 int main(int argc, char **argv)
 {
+    const int ARRAY_SIZE = atoi(argv[1]); // In C, the atoi() function converts a string to an integer
+    const int NUMBER_VECTORS = atoi(argv[1]);
+    
     int my_rank;   // Identificador deste processo
     int proc_n;    // Numero de processos disparados pelo usuário na linha de comando (np)
 
@@ -266,9 +269,6 @@ int main(int argc, char **argv)
 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &proc_n);
-
-    const int ARRAY_SIZE = atoi(argv[1]); // In C, the atoi() function converts a string to an integer
-    const int NUMBER_VECTORS = proc_n*2;
 
     if (my_rank == 0) {
         master(proc_n, ARRAY_SIZE, NUMBER_VECTORS);

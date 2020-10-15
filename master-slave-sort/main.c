@@ -31,19 +31,23 @@ void bs(int n, int * vetor)
         }
 }
 
-void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
-    
+void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int *matrix) {
+
+    #ifdef DEBUG
+    printf("\n[MASTER] Inicializando matriz");
+    #endif
+
     for (int i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
         for (int j=0 ; j<NUMBER_VECTORS; j++) {
-            matrix[i][j] = ARRAY_SIZE-i;
+            matrix[i*NUMBER_VECTORS+j] = ARRAY_SIZE-i;
         }
     }
 
     #ifdef DEBUG // Caso a var DEBUG estiver definida como 1, esse trecho abaixo é compilado
-    printf("\nMatrix:\n");
+    printf("\nMatriz:\n");
     for (int i=0 ; i<ARRAY_SIZE; i++) {
         for (int j=0 ; j<NUMBER_VECTORS; j++) {
-            printf(" [%03d] ", matrix[i][j]);
+            printf(" [%03d] ", matrix[i*NUMBER_VECTORS+j]);
         }
         printf("\n");
     }
@@ -53,26 +57,48 @@ void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int matrix[ARRAY_SIZE
 void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
 {
     MPI_Status status;
-    MPI_Request request; // used for immediate
+    // MPI_Request request; // used for immediate
 
     double t1, t2; // Tempo de início - Tempo de término
     t1 = MPI_Wtime(); // inicia a contagem do tempo
 
-    int matrix[ARRAY_SIZE][NUMBER_VECTORS]; // Saco de trabalho
+    // int matrix[ARRAY_SIZE][NUMBER_VECTORS]; // Saco de trabalho
+
+    // int **matrix = (int **) malloc(ARRAY_SIZE * sizeof(int*));
+    // for(int i = 0; i < ARRAY_SIZE; i++) 
+    //     matrix[i] = (int *) malloc(NUMBER_VECTORS * sizeof(int));
+
+    int *matrix = (int *)malloc(ARRAY_SIZE * NUMBER_VECTORS * sizeof(int));
+
     int size_message = ARRAY_SIZE+1;
     int slaves_alive = proc_n;
     int done_tasks = 0;
     int total_tasks = proc_n*2;
     int last_task = 0; // Utilizado para controlar qual a posição da matriz que será enviado ao slave
-    int i;
+    // int i;
     int j;
 
+    // initialize_matrix(ARRAY_SIZE, NUMBER_VECTORS, (int (*)[])(matrix[0]));
     initialize_matrix(ARRAY_SIZE, NUMBER_VECTORS, matrix);
+
+    // #ifdef DEBUG // Caso a var DEBUG estiver definida como 1, esse trecho abaixo é compilado
+    // printf("\nMatriz:\n");
+    // for (int i=0 ; i<ARRAY_SIZE; i++) {
+    //     for (int j=0 ; j<NUMBER_VECTORS; j++) {
+    //         printf(" [%03d] ", matrix[i*NUMBER_VECTORS+j]);
+    //     }
+    //     printf("\n");
+    // }
+    // #endif
+
+    printf("\n[MASTER] passou por aqui #1");
 
     while (done_tasks < total_tasks || slaves_alive > 1) {
 
+        // int message[size_message];
+        int *message = (int*) malloc(sizeof(int)*size_message);
+
         // Recebe mensagem do slave
-        int message[size_message];
         MPI_Recv(message, size_message, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
         #ifdef DEBUG
@@ -91,8 +117,8 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
                 // Envia matrix ao slave
                 // int new_vector[ARRAY_SIZE+1];
                 for (j=0; j<ARRAY_SIZE; j++) {
-                    message[j] = matrix[j][last_task];
-                    // printf("\n [%3d] ", new_vector[j]);
+                    message[j] = matrix[j*NUMBER_VECTORS+last_task]; // matrix[j][last_task];
+                    // printf("\n [%3d] ", matrix[j*NUMBER_VECTORS+last_task]);
                 }
 
                 message[ARRAY_SIZE] = last_task; // ultimo elemento do vector é o indice do saco de trabalho
@@ -141,7 +167,8 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
 
             int index = message[ARRAY_SIZE]; // Indice da task resolvida pelo slave;
             for (j=0; j<ARRAY_SIZE; j++) {
-                matrix[j][index] = message[j];
+                // matrix[j][index] = message[j];
+                matrix[j*NUMBER_VECTORS+index] = message[j];
                 // printf("\n [%3d] ", vetor[j][index]);
             }
 
@@ -153,6 +180,8 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
             #endif
 
         }
+        
+        free(message);
 
     }
 
@@ -161,12 +190,14 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
     printf("\n[MASTER] Vetores ordenados:\n");
     for (i=0 ; i<ARRAY_SIZE; i++) {
         for (j=0 ; j<proc_n*2; j++) {
-            printf("   [%07d] ", matrix[i][j]);
+            printf("   [%07d] ", matrix[i*NUMBER_VECTORS+j]);
         }
         printf("\n");
     }
     printf("\n");
     #endif
+
+    free(matrix);
 
     t2 = MPI_Wtime(); // termina a contagem do tempo
 
@@ -179,7 +210,7 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
 void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
 {
     MPI_Status status;
-    MPI_Request request;
+    // MPI_Request request;
     int size_message = ARRAY_SIZE+1;
 
     #ifdef DEBUG
@@ -189,8 +220,13 @@ void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
     // Comando de encerramento   
     while(1) {
 
-        int i=0;
-        int message[size_message];
+        // printf("\n[SLAVE %d] passou por aqui #1", my_rank);
+
+        // int i=0;
+        // int message[size_message];
+        int* message = (int*) malloc(sizeof(int)*size_message);
+
+        // printf("\n[SLAVE %d] passou por aqui #2", my_rank);
 
         // Envia mensagem ao master solicitando trabalho
         #ifdef DEBUG
@@ -198,6 +234,8 @@ void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
         #endif
 
         MPI_Send(message, size_message, MPI_INT, MASTER, TAG_REQUEST_TASK, MPI_COMM_WORLD);
+
+        // printf("\n[SLAVE %d] passou por aqui #3", my_rank);
 
         // Recebe o trabalho
         #ifdef DEBUG
@@ -249,6 +287,8 @@ void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
         printf("\n[SLAVE %d] I'm slave number: %d and send back a vector", my_rank, my_rank);
         #endif
 
+        free(message);
+
     }
 
     #ifdef DEBUG
@@ -260,7 +300,7 @@ void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
 int main(int argc, char **argv)
 {
     const int ARRAY_SIZE = atoi(argv[1]); // In C, the atoi() function converts a string to an integer
-    const int NUMBER_VECTORS = atoi(argv[1]);
+    const int NUMBER_VECTORS = atoi(argv[2]);
     
     int my_rank;   // Identificador deste processo
     int proc_n;    // Numero de processos disparados pelo usuário na linha de comando (np)

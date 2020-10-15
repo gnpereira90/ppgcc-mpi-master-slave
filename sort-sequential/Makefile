@@ -3,7 +3,7 @@ default: build
 build:
 	gcc main.c -o main.o -std=c99
 
-run: build
+run:
 	./main.o ${ARRAY_SIZE} ${NUMBER_VECTORS} ${DEBUG}
 
 test: build 

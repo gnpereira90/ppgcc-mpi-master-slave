@@ -3,7 +3,7 @@ default: build
 build:
 	mpicc main.c -o main.o -std=c99 -Wall
 
-run: build
+run:
 	mpirun --hostfile hostfile -np ${NP} main.o ${ARRAY_SIZE} ${NUMBER_VECTORS}
 
 clear:

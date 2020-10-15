@@ -4,8 +4,8 @@
 #include <string.h>
 
 // #define DEBUG 1            // comentar esta linha quando for medir tempo
-#define ARRAY_SIZE 40      // trabalho final com o valores 10.000, 100.000, 1.000.000
-#define NUMBER_VECTORS 20   // Quantidade de vetores na matriz
+// #define ARRAY_SIZE 40      // trabalho final com o valores 10.000, 100.000, 1.000.000
+// #define NUMBER_VECTORS 20   // Quantidade de vetores na matriz
 #define MASTER 0
 #define TAG_REQUEST_TASK 1
 #define TAG_KILL_SLAVE 2
@@ -31,7 +31,7 @@ void bs(int n, int * vetor)
         }
 }
 
-void initialize_matrix(int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
+void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
     
     for (int i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
         for (int j=0 ; j<NUMBER_VECTORS; j++) {
@@ -50,7 +50,7 @@ void initialize_matrix(int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
     #endif
 }
 
-void master(int proc_n)
+void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
 {
     MPI_Status status;
     MPI_Request request; // used for immediate
@@ -58,30 +58,21 @@ void master(int proc_n)
     double t1, t2; // Tempo de início - Tempo de término
     t1 = MPI_Wtime(); // inicia a contagem do tempo
 
-    // const int ARRAY_SIZE = 100;
-    // const int NUMBER_VECTORS = proc_n*2;
-
     int matrix[ARRAY_SIZE][NUMBER_VECTORS]; // Saco de trabalho
     int size_message = ARRAY_SIZE+1;
     int slaves_alive = proc_n;
     int done_tasks = 0;
     int total_tasks = proc_n*2;
-    int last_task = 0; // Utilizado para controlar qual a posição do matrix que será enviado ao slave
+    int last_task = 0; // Utilizado para controlar qual a posição da matriz que será enviado ao slave
     int i;
     int j;
 
-    printf("\ntotal_tasks %d slaves_alive %d", total_tasks, slaves_alive);
-
-    initialize_matrix(matrix);
+    initialize_matrix(ARRAY_SIZE, NUMBER_VECTORS, matrix);
 
     while (done_tasks < total_tasks || slaves_alive > 1) {
 
-        // int *message;
-        // message = (int *) malloc(ARRAY_SIZE+1 * sizeof(int));
-        int message[size_message];
-
         // Recebe mensagem do slave
-        // int message[ARRAY_SIZE+1];   // Buffer para as mensagens
+        int message[size_message];
         MPI_Recv(message, size_message, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
         #ifdef DEBUG
@@ -104,8 +95,15 @@ void master(int proc_n)
                     // printf("\n [%3d] ", new_vector[j]);
                 }
 
-                message[size_message] = last_task; // ulitmo elemento do vector é o indice do saco de trabalho
+                message[ARRAY_SIZE] = last_task; // ultimo elemento do vector é o indice do saco de trabalho
                 
+                #ifdef DEBUG
+                printf("\n[MASTER] Sending task: %d\n", last_task);
+                for (i=0; i<size_message; i++)
+                    printf(" [%d] ", message[i]);
+                printf("\n");
+                #endif
+
                 #ifdef DEBUG
                 printf("\n[MASTER] message[size_message] %d", message[size_message]);
                 printf("\n[MASTER] Enviando trabalho ao slave id: %d", status.MPI_SOURCE);
@@ -114,12 +112,6 @@ void master(int proc_n)
                 MPI_Send(message, size_message, MPI_INT, status.MPI_SOURCE, TAG_JOB_MESSAGES, MPI_COMM_WORLD);
 
                 last_task += 1;
-
-                // #ifdef DEBUG
-                // printf("\n[MASTER] Last task: %d", last_task);
-                // #endif
-
-                // free(message);
             
             } else { // Shutdown
                 int stop_flag = 1;
@@ -140,14 +132,14 @@ void master(int proc_n)
             printf("\n[MASTER] Atualizando saco de trabalho");
             #endif
 
-            // for (i=0; i<ARRAY_SIZE+1; i++)
-            //     printf("\n [%d]", message[i]);
-            
-            // #ifdef DEBUG
-            // printf("\n[MASTER] message[size_message] %d", message[size_message]);
-            // #endif
-            
-            int index = message[size_message]; // Indice da task resolvida pelo slave
+            #ifdef DEBUG
+            printf("\n[MASTER] Receive task: %d\n", message[ARRAY_SIZE]);
+            for (i=0; i<size_message; i++)
+                printf(" [%d] ", message[i]);
+            printf("\n");
+            #endif
+
+            int index = message[ARRAY_SIZE]; // Indice da task resolvida pelo slave;
             for (j=0; j<ARRAY_SIZE; j++) {
                 matrix[j][index] = message[j];
                 // printf("\n [%3d] ", vetor[j][index]);
@@ -156,44 +148,11 @@ void master(int proc_n)
             // Atualiza contador de tasks
             done_tasks += 1;
 
-            // #ifdef DEBUG
-            // printf("\n[MASTER] Done tasks: %d", done_tasks);
-            // #endif
-
-            // free(message);
+            #ifdef DEBUG
+            printf("\n[MASTER] Done tasks: %d", done_tasks);
+            #endif
 
         }
-
-        // Há mais trabalho a ser realizado?
-        // printf("\n[MASTER] done_tasks %d, total_tasks %d", done_tasks, total_tasks);
-        // if (done_tasks == total_tasks) {
-
-        //     // Envia mensagem de desligamento
-        //     #ifdef DEBUG
-        //     printf("\n[MASTER] Enviando comando de encerramento aos slaves");
-        //     #endif
-
-        //     printf("\n[MASTER] slaves_alive %d\n", slaves_alive);
-        //     while(slaves_alive > 1) {
-
-        //         printf("\n[MASTER] MATANDO SLAVE");
-                
-        //         // Esperamos receber uma solicitação de trabalho
-        //         int message[size_message];
-        //         MPI_Recv(message, size_message, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-        //         // Enviando mensagem de encerramento
-        //         int stop_flag = 1;
-        //         MPI_Send(&stop_flag, 1, MPI_INT, status.MPI_SOURCE, TAG_KILL_SLAVE, MPI_COMM_WORLD);
-
-        //         slaves_alive -= 1;
-
-        //         printf("\n[MASTER] MATOU SLAVE slaves_alive %d", slaves_alive);
-
-        //     }
-
-        //     break;
-        // }
 
     }
 
@@ -202,7 +161,7 @@ void master(int proc_n)
     printf("\n[MASTER] Vetores ordenados:\n");
     for (i=0 ; i<ARRAY_SIZE; i++) {
         for (j=0 ; j<proc_n*2; j++) {
-            printf("   [%03d] ", matrix[i][j]);
+            printf("   [%07d] ", matrix[i][j]);
         }
         printf("\n");
     }
@@ -214,7 +173,7 @@ void master(int proc_n)
 
 }
 
-void slave(int my_rank)
+void slave(int my_rank, int ARRAY_SIZE, int NUMBER_VECTORS)
 {
     MPI_Status status;
     MPI_Request request;
@@ -228,8 +187,6 @@ void slave(int my_rank)
     while(1) {
 
         int i=0;
-        // int *message;
-        // message = (int *) malloc(size_message * sizeof(int));
         int message[size_message];
 
         // Envia mensagem ao master solicitando trabalho
@@ -255,20 +212,40 @@ void slave(int my_rank)
         printf("\n[SLAVE %d] Ordenando vetor", my_rank);
         #endif
 
-        bs(ARRAY_SIZE, message);
+        #ifdef DEBUG
+        printf("\n[SLAVE] Receive task: %d\n", message[ARRAY_SIZE]);
+        for (i=0; i<size_message; i++)
+            printf(" [%d] ", message[i]);
+        printf("\n");
+        #endif
+
+        int index = message[ARRAY_SIZE]; // Indice da task resolvida pelo slave
+        int vector[size_message];
+        for (int j=0; j<ARRAY_SIZE; j++) {
+            vector[j] = message[j];
+        }
+
+        bs(ARRAY_SIZE, vector);
 
         // Retorna vetor ordenado ao master
         #ifdef DEBUG
         printf("\n[SLAVE %d] Enviando trabalho", my_rank);
         #endif
         
-        MPI_Send(message, size_message, MPI_INT, MASTER, TAG_JOB_MESSAGES, MPI_COMM_WORLD);
+        vector[ARRAY_SIZE] = index;
+        MPI_Send(vector, size_message, MPI_INT, MASTER, TAG_JOB_MESSAGES, MPI_COMM_WORLD);
+
+        #ifdef DEBUG
+        printf("\n[SLAVE] Sending task: %d\n", vector[ARRAY_SIZE]);
+        for (i=0; i<size_message; i++)
+            printf(" [%d] ", vector[i]);
+        printf("\n");
+        #endif
 
         #ifdef DEBUG
         printf("\n[SLAVE %d] I'm slave number: %d and send back a vector", my_rank, my_rank);
         #endif
 
-        // free(message);
     }
 
     #ifdef DEBUG
@@ -281,18 +258,20 @@ int main(int argc, char **argv)
 {
     int my_rank;   // Identificador deste processo
     int proc_n;    // Numero de processos disparados pelo usuário na linha de comando (np)
-    int source;    // Identificador do proc.origem
 
     MPI_Init(&argc, &argv);
 
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &proc_n);
 
+    const int ARRAY_SIZE = atoi(argv[1]); // In C, the atoi() function converts a string to an integer
+    const int NUMBER_VECTORS = proc_n*2;
+
     if (my_rank == 0) {
-        master(proc_n);
+        master(proc_n, ARRAY_SIZE, NUMBER_VECTORS);
     } 
     else {
-        slave(my_rank);
+        slave(my_rank, ARRAY_SIZE, NUMBER_VECTORS);
     }
 
     MPI_Finalize();

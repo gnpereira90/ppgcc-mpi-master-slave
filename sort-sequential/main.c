@@ -26,19 +26,23 @@ void bs(int n, int * vetor) {
         }
 }
 
-void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int matrix[ARRAY_SIZE][NUMBER_VECTORS]) {
-    
+void initialize_matrix(int ARRAY_SIZE, int NUMBER_VECTORS, int *matrix) {
+
+    #ifdef DEBUG
+    printf("\n[MASTER] Inicializando matriz");
+    #endif
+
     for (int i=0 ; i<ARRAY_SIZE; i++) {  /* init array with worst case for sorting */
         for (int j=0 ; j<NUMBER_VECTORS; j++) {
-            matrix[i][j] = ARRAY_SIZE-i;
+            matrix[i*NUMBER_VECTORS+j] = ARRAY_SIZE-i;
         }
     }
 
     #ifdef DEBUG // Caso a var DEBUG estiver definida como 1, esse trecho abaixo é compilado
-    printf("\nMatrix:\n");
+    printf("\nMatriz:\n");
     for (int i=0 ; i<ARRAY_SIZE; i++) {
         for (int j=0 ; j<NUMBER_VECTORS; j++) {
-            printf(" [%03d] ", matrix[i][j]);
+            printf(" [%03d] ", matrix[i*NUMBER_VECTORS+j]);
         }
         printf("\n");
     }
@@ -53,16 +57,16 @@ int main(int argc, char **argv) {
 
     clock_t start = clock(); // inicia a contagem do tempo
 
-    int matrix[ARRAY_SIZE][NUMBER_VECTORS];
+    int *matrix = (int *)malloc(ARRAY_SIZE * NUMBER_VECTORS * sizeof(int));
 
     initialize_matrix(ARRAY_SIZE, NUMBER_VECTORS, matrix);
 
+    int *vector = (int*) malloc(sizeof(int)*ARRAY_SIZE);
+
     for (int i=0; i<NUMBER_VECTORS; i++) {
 
-        int vector[ARRAY_SIZE];
-
         for (int j=0; j<ARRAY_SIZE; j++) {
-            vector[j] = matrix[j][i];
+            vector[j] = matrix[j*NUMBER_VECTORS+i]; // matrix[j][i];
             // printf("\nvector[j] %d", vector[j]);
         }
         // printf("\n");
@@ -70,7 +74,8 @@ int main(int argc, char **argv) {
         bs(ARRAY_SIZE, vector);
 
         for (int j=0; j<ARRAY_SIZE; j++) {
-            matrix[j][i] = vector[j];
+            // matrix[j][i] = vector[j];
+            matrix[j*NUMBER_VECTORS+i] = vector[j];
             // printf("\nvector[j] %d", vector[j]);
         }
         // printf("\n");
@@ -86,6 +91,9 @@ int main(int argc, char **argv) {
         printf("\n");
     }
     #endif
+
+    free(matrix);
+    free(vector);
 
     clock_t end = clock(); // termina a contagem do tempo
     float seconds = (float)(end - start) / CLOCKS_PER_SEC;

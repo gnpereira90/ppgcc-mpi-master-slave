@@ -91,7 +91,7 @@ void master(int proc_n, int ARRAY_SIZE, int NUMBER_VECTORS)
     // }
     // #endif
 
-    printf("\n[MASTER] passou por aqui #1");
+    // printf("\n[MASTER] passou por aqui #1");
 
     while (done_tasks < total_tasks || slaves_alive > 1) {
 

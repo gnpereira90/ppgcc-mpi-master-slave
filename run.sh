@@ -1,22 +1,36 @@
-#!/bin/bash
+#!/bin/bash -e
 
-mkdir -p logs/sort-sequential
-mkdir -p logs/master-slave-sort
+mkdir -p logs
+touch logs/sort-sequential.csv
+touch logs/master-slave-sort.csv
 
-tries=3
+TRIES=5
+# CORES=("1" "2" "4" "8" "16")
+DIR=$PWD
+OUTPUTFILE_MASTER_SLAVE="$PWD/logs/sort-sequential.csv"
+OUTPUTFILE_SEQUENTIAL="$PWD/logs/master-slave-sort.csv"
 
-number_vectors=1000
-array_size=100000
+number_vectors=10
+array_size=10
 
-cd sort-sequential
-for ((i = 1; i <= $tries; i++)); do
-    make run ARRAY_SIZE=$array_size NUMBER_VECTORS=$number_vectors > ../logs/sort-sequential/sort-sequential-$i.txt
+cd "$DIR/sort-sequential"
+make
+echo "TRIES;ARRAY_SIZE;NUMBER_VECTORS;RUNTIME" > "$OUTPUTFILE_SEQUENTIAL"
+for i in $(seq 1 $TRIES); do
+    row=$(make run ARRAY_SIZE=$array_size NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
+    echo "$i;$row" >> "$OUTPUTFILE_SEQUENTIAL"
+    echo "$i;$array_size;$number_vectors;$row"
 done
 
-cd ../master-slave-sort
-for ((i = 1; i <= $tries; i++)); do
-    processes=($(seq 2 1 20))
+cd "$DIR/master-slave-sort"
+make
+echo "TRIES;NPS;ARRAY_SIZE;NUMBER_VECTORS;RUNTIME" > "$OUTPUTFILE_MASTER_SLAVE"
+for i in $(seq 1 $TRIES); do
+
+    processes=($(seq 2 2 32))
+
     for np in "${processes[@]}"; do
-        make run NP=$np ARRAY_SIZE=$array_size NUMBER_VECTORS=$number_vectors > ../logs/master-slave-sort/master-slave-sort-$np-$i.txt
+        row=$(make run NP=$np ARRAY_SIZE=$array_size NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
+        echo "$i;$np;$array_size;$number_vectors;$row" >> "$OUTPUTFILE_MASTER_SLAVE"
     done
 done

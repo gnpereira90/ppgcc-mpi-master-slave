@@ -11,7 +11,7 @@ touch logs/master-slave-sort.csv
 
 TRIES=3
 # CORES=("1" "2" "4" "8" "16")
-ARGS=(10000, 100000, 1000000)
+ARGS=(10000 100000 1000000)
 DIR=$PWD
 OUTPUTFILE_SEQUENTIAL="$PWD/logs/sort-sequential.csv"
 OUTPUTFILE_MASTER_SLAVE="$PWD/logs/master-slave-sort.csv"

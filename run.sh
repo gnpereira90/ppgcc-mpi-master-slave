@@ -17,6 +17,7 @@ number_vectors=1000
 cd "$DIR/sort-sequential"
 make
 echo "TRIES;ARRAY_SIZE;NUMBER_VECTORS;RUNTIME" > "$OUTPUTFILE_SEQUENTIAL"
+echo "Runnning Bubble Sort Sequential"
 for k in $(seq 1 $TRIES); do
     for ((i = 0; i < ${#ARGS[@]}; i++)); do
         row=$(make run ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
@@ -28,6 +29,7 @@ done
 cd "$DIR/master-slave-sort"
 make
 echo "TRIES;NPS;ARRAY_SIZE;NUMBER_VECTORS;RUNTIME" > "$OUTPUTFILE_MASTER_SLAVE"
+echo "Runnning Bubble Sort Master Slave"
 for k in $(seq 1 $TRIES); do
     processes=($(seq 2 2 32))
     for np in "${processes[@]}"; do

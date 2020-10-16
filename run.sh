@@ -6,46 +6,49 @@ echo "Initial Time: `date`"
 echo
 
 mkdir -p logs
-touch logs/sort-sequential.csv
-touch logs/master-slave-sort.csv
+touch logs/dataset.csv
 
 TRIES=3
-# CORES=("1" "2" "4" "8" "16")
-ARGS=(10000 100000 1000000)
+ARGS=(1000 5000 10000)
 DIR=$PWD
-OUTPUTFILE_SEQUENTIAL="$PWD/logs/sort-sequential.csv"
-OUTPUTFILE_MASTER_SLAVE="$PWD/logs/master-slave-sort.csv"
+OUTPUTFILE="$PWD/logs/dataset.csv"
 
 number_vectors=1000
-# array_size=100000
+
+CSVHEAD="TRIES;NPS;NUMBER_VECTORS"
+for ((i = 0; i < ${#ARGS[@]}; i++)); do
+	CSVHEAD="$CSVHEAD;${ARGS[$i]}"
+done
+
+echo "$CSVHEAD" > "$OUTPUTFILE"
 
 cd "$DIR/sort-sequential"
 make
-echo "TRIES;ARRAY_SIZE;NUMBER_VECTORS;RUNTIME" > "$OUTPUTFILE_SEQUENTIAL"
 echo "Runnning Bubble Sort Sequential"
 for k in $(seq 1 $TRIES); do
+    row=""
     for ((i = 0; i < ${#ARGS[@]}; i++)); do
-        row=$(make run ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
-        echo "$k; ${ARGS[$i]}; $number_vectors; $row" >> "$OUTPUTFILE_SEQUENTIAL"
-        echo "$k; ${ARGS[$i]}; $number_vectors; $row"
+        row="$row $(make run ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2);"
     done
+    echo "$k; 1; $number_vectors; $row" >> "$OUTPUTFILE"
+    echo "$k; 1; $number_vectors; $row"
 done
 
 cd "$DIR/master-slave-sort"
 make
-echo "TRIES;NPS;ARRAY_SIZE;NUMBER_VECTORS;RUNTIME" > "$OUTPUTFILE_MASTER_SLAVE"
 echo "Runnning Bubble Sort Master Slave"
 for k in $(seq 1 $TRIES); do
     processes=($(seq 2 2 32))
     for np in "${processes[@]}"; do
+        row=""
         for ((i = 0; i < ${#ARGS[@]}; i++)); do
-            row=$(make run NP=$np ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2)
-            echo "$k; $np; ${ARGS[$i]}; $number_vectors; $row" >> "$OUTPUTFILE_MASTER_SLAVE"
-            echo "$k; $np; ${ARGS[$i]}; $number_vectors; $row"
+            row="$row $(make run NP=$np ARRAY_SIZE=${ARGS[$i]} NUMBER_VECTORS=$number_vectors | grep -i 'RUNTIME' | cut -d "=" -f2);"
         done
+        echo "$k; $np; $number_vectors; $row" >> "$OUTPUTFILE"
+        echo "$k; $np; $number_vectors; $row"
     done
 done
 
 echo
-echo "\nFinal Time: `date`"
+echo "Final Time: `date`"
 echo

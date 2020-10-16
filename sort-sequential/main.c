@@ -9,7 +9,7 @@
 // #define NUMBER_VECTORS 20   // Quantidade de vetores na matriz
 
 // Bubble Sort
-void bs(int n, int * vetor) {
+void bs(int n, int *vetor) {
     int c=0, d, troca, trocou =1;
 
     while (c < (n-1) & trocou )
@@ -67,30 +67,33 @@ int main(int argc, char **argv) {
     double t1, t2; // Tempo de início - Tempo de término
     t1 = MPI_Wtime(); // inicia a contagem do tempo
 
-    int *matrix = (int *)malloc(ARRAY_SIZE * NUMBER_VECTORS * sizeof(int));
+    int *matrix = (int*) malloc(ARRAY_SIZE * NUMBER_VECTORS * sizeof(int));
 
     initialize_matrix(ARRAY_SIZE, NUMBER_VECTORS, matrix);
 
-    int *vector = (int*) malloc(sizeof(int)*ARRAY_SIZE);
+    // int *vector = (int*) malloc(sizeof(int)*ARRAY_SIZE);
 
-    for (int i=0; i<NUMBER_VECTORS; i++) {
+    for(int i = 0; i < NUMBER_VECTORS; i++)
+        bs(ARRAY_SIZE, &matrix[i*ARRAY_SIZE]);
 
-        for (int j=0; j<ARRAY_SIZE; j++) {
-            vector[j] = matrix[j*NUMBER_VECTORS+i]; // matrix[j][i];
-            // printf("\nvector[j] %d", vector[j]);
-        }
-        // printf("\n");
+    // for (int i=0; i<NUMBER_VECTORS; i++) {
 
-        bs(ARRAY_SIZE, vector);
+    //     for (int j=0; j<ARRAY_SIZE; j++) {
+    //         vector[j] = matrix[j*NUMBER_VECTORS+i]; // matrix[j][i];
+    //         // printf("\nvector[j] %d", vector[j]);
+    //     }
+    //     // printf("\n");
 
-        for (int j=0; j<ARRAY_SIZE; j++) {
-            // matrix[j][i] = vector[j];
-            matrix[j*NUMBER_VECTORS+i] = vector[j];
-            // printf("\nvector[j] %d", vector[j]);
-        }
-        // printf("\n");
+    //     bs(ARRAY_SIZE, vector);
 
-    }
+    //     for (int j=0; j<ARRAY_SIZE; j++) {
+    //         // matrix[j][i] = vector[j];
+    //         matrix[j*NUMBER_VECTORS+i] = vector[j];
+    //         // printf("\nvector[j] %d", vector[j]);
+    //     }
+    //     // printf("\n");
+
+    // }
 
     #ifdef DEBUG
     printf("\nMatrix sorted:\n");

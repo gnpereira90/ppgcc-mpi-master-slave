@@ -111,5 +111,7 @@ int main(int argc, char **argv) {
     printf("\nNUMBER_VECTORS=%d", NUMBER_VECTORS);
     printf("\nRUNTIME=%f\n", t2-t1);
 
+    MPI_Finalize();
+
     return 0;
 }

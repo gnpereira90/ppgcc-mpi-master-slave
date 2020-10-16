@@ -1,3 +1,4 @@
+#include "mpi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,8 +55,17 @@ int main(int argc, char **argv) {
     const int ARRAY_SIZE = atoi(argv[1]);
     const int NUMBER_VECTORS = atoi(argv[2]);
     // const int DEBUG = argv[3];
+    
+    int my_rank;   // Identificador deste processo
+    int proc_n;    // Numero de processos disparados pelo usuário na linha de comando (np)
 
-    clock_t start = clock(); // inicia a contagem do tempo
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &proc_n);
+
+    double t1, t2; // Tempo de início - Tempo de término
+    t1 = MPI_Wtime(); // inicia a contagem do tempo
 
     int *matrix = (int *)malloc(ARRAY_SIZE * NUMBER_VECTORS * sizeof(int));
 
@@ -95,12 +105,11 @@ int main(int argc, char **argv) {
     free(matrix);
     free(vector);
 
-    clock_t end = clock(); // termina a contagem do tempo
-    float seconds = (float)(end - start) / CLOCKS_PER_SEC;
+    t2 = MPI_Wtime(); // termina a contagem do tempo
 
     printf("\nARRAY_SIZE=%d", ARRAY_SIZE);
     printf("\nNUMBER_VECTORS=%d", NUMBER_VECTORS);
-    printf("\nRUNTIME=%f\n", seconds);
+    printf("\nRUNTIME=%f\n", t2-t1);
 
     return 0;
 }
